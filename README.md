@@ -30,7 +30,7 @@ dependencies {
 - add your frida injector binaries (I got further plans to kill this step and handle releases with binary updater inside the library)
 - at this point you will need a similar switch case to identify the right arch to use:
 
-```
+```java
     String fridaInjectorBinaryAssetName = "";
     switch (getArch()) {
         case "arm":
@@ -69,7 +69,7 @@ dependencies {
 
 - add your agent.js in the assets folder as well and then just:
 
-```
+```java
 try {
     FridaInjector fridaInjector = new FridaInjector(this, "fridaInjectorBinaryAssetName");
     fridaInjector.inject("com.android.systemui", "agent.js", true);
