@@ -27,7 +27,8 @@ dependencies {
 #### How to:
 
 - create assets folder in your project
-- add your frida injector binaries (I got further plans to kill this step and handle releases with binary updater inside the library)
+- put your updated frida injector binaries (I got further plans to kill this step and handle releases with binary updater inside the library) in the assets folder
+    -> You can safely push a new updated binary. The library will remove the old one and extract the binary updated only once
 - at this point you will need a similar switch case to identify the right arch to use:
 
 ```java
