@@ -34,16 +34,16 @@ dependencies {
     String fridaInjectorBinaryAssetName = "";
     switch (getArch()) {
         case "arm":
-            assetName = "arm_frida_injector"
+            fridaInjectorBinaryAssetName = "arm_frida_injector"
             break;
         case "arm64":
-            assetName = "arm64_frida_injector"
+            fridaInjectorBinaryAssetName = "arm64_frida_injector"
             break;
         case "x86":
-            assetName = "x86_frida_injector"
+            fridaInjectorBinaryAssetName = "x86_frida_injector"
             break;
         case "x86_64":
-            assetName = "x86_64_frida_injector"
+            fridaInjectorBinaryAssetName = "x86_64_frida_injector"
             break;
         default:
             return;
