@@ -3,6 +3,7 @@ package com.igio90.fridainjector;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.AssetManager;
+import android.os.Build;
 
 import com.chrisplus.rootmanager.RootManager;
 
@@ -11,34 +12,26 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
 public class FridaInjector {
     private final Context mContext;
 
-    private File mInjector;
+    private final File mInjector;
 
-    public FridaInjector(Context context, String injectorBinaryAssetPath) throws IOException {
-        mContext = context;
-
-        if (!RootManager.getInstance().hasRooted()) {
-            throw new RuntimeException("must run on a rooted device");
-        }
-        if (!RootManager.getInstance().obtainPermission()) {
-            throw new RuntimeException("failed to obtain root permissions");
-        }
-
-        extractInjectorIfNeeded(injectorBinaryAssetPath);
+    private FridaInjector(FridaInjector.Builder builder) {
+        mContext = builder.mContext;
+        mInjector = builder.getInjector();
     }
 
-    public void inject(final String packageName, String agentAssetPath, boolean spawn) throws IOException {
+    public void inject(FridaAgent fridaAgent, String packageName, boolean spawn) {
         if (mInjector == null) {
             throw new RuntimeException("did you forget to call init()?");
         }
 
-        final File agent = new File(mContext.getFilesDir(), "agent.js");
-        extractAsset(agentAssetPath, agent);
-        RootManager.getInstance().runCommand("chmod 777 " + agent.getPath());
+        String agentPath = fridaAgent.getAgent().getPath();
+        RootManager.getInstance().runCommand("chmod 777 " + agentPath);
 
         if (!RootManager.getInstance().isProcessRunning(packageName)) {
             spawn = true;
@@ -61,7 +54,7 @@ public class FridaInjector {
                         e.printStackTrace();
                     }
                 }
-                inject(packageName, agent.getPath());
+                inject(packageName, agentPath);
             }).start();
 
             if (launchIntent != null) {
@@ -72,18 +65,94 @@ public class FridaInjector {
                 // todo: handle cases here
             }
         } else {
-            inject(packageName, agent.getPath());
+            inject(packageName, agentPath);
         }
     }
 
     private void inject(String packageName, String agentPath) {
         RootManager.getInstance().runCommand(mInjector.getPath() + " -n " + packageName +
-                " -s " + agentPath + " -e");
+                " -s " + agentPath + " --runtime=v8 -e");
     }
 
-    private void extractInjectorIfNeeded(String name) throws IOException {
-        File injectorPath = new File(mContext.getFilesDir(), "injector");
-        mInjector = new File(injectorPath, name);
+    public static class Builder {
+        private final Context mContext;
+        private String mArmBinaryPath;
+        private String mArm64BinaryPath;
+        private String mX86BinaryPath;
+        private String mX86_64BinaryPath;
+
+        private File mInjector;
+
+        public Builder(Context context) {
+            if (!RootManager.getInstance().hasRooted()) {
+                throw new RuntimeException("must run on a rooted device");
+            }
+            if (!RootManager.getInstance().obtainPermission()) {
+                throw new RuntimeException("failed to obtain root permissions");
+            }
+
+            mContext = context;
+        }
+
+        public Builder withArmInjector(String armInjectorBinaryAssetName) {
+            mArmBinaryPath = armInjectorBinaryAssetName;
+            return this;
+        }
+
+        public Builder withArm64Injector(String arm64InjectorBinaryAssetName) {
+            mArm64BinaryPath = arm64InjectorBinaryAssetName;
+            return this;
+        }
+
+        public Builder withX86Injector(String x86InjectorBinaryAssetName) {
+            mX86BinaryPath = x86InjectorBinaryAssetName;
+            return this;
+        }
+
+        public Builder withX86_64Injector(String x86_64InjectorBinaryAssetName) {
+            mX86_64BinaryPath = x86_64InjectorBinaryAssetName;
+            return this;
+        }
+
+        public FridaInjector build() throws IOException {
+            if (mArmBinaryPath == null && mArm64BinaryPath == null &&
+                    mX86BinaryPath == null && mX86_64BinaryPath == null) {
+                throw new RuntimeException("injector asset file name not provided");
+            }
+
+            String arch = getArch();
+            String injectorName = null;
+            switch (arch) {
+                case "arm":
+                    injectorName = mArmBinaryPath;
+                    break;
+                case "arm64":
+                    injectorName = mArm64BinaryPath;
+                    break;
+                case "x86":
+                    injectorName = mX86BinaryPath;
+                    break;
+                case "x86_64":
+                    injectorName = mX86_64BinaryPath;
+                    break;
+            }
+
+            if (injectorName == null) {
+                throw new RuntimeException("injector binary not provided for arch: " + arch);
+            }
+
+            mInjector = extractInjectorIfNeeded(mContext, injectorName);
+            return new FridaInjector(this);
+        }
+
+        private File getInjector() {
+            return mInjector;
+        }
+    }
+
+    private static File extractInjectorIfNeeded(Context context, String name) throws IOException {
+        File injectorPath = new File(context.getFilesDir(), "injector");
+        File injector = new File(injectorPath, name);
 
         if (!injectorPath.exists()) {
             injectorPath.mkdir();
@@ -91,27 +160,28 @@ public class FridaInjector {
             File[] files = injectorPath.listFiles();
             if (files != null && files.length > 0) {
                 if (files[0].getName().equals(name)) {
-                    return;
+                    return injector;
                 }
                 files[0].delete();
             }
         }
 
-        extractAsset(name, mInjector);
-        RootManager.getInstance().runCommand("chmod 777 " + mInjector.getPath());
+        Utils.extractAsset(context, name, injector);
+        RootManager.getInstance().runCommand("chmod 777 " + injector.getPath());
+        return injector;
     }
 
-    private void extractAsset(String assetName, File dest) throws IOException {
-        AssetManager assetManager = mContext.getAssets();
-        InputStream in = assetManager.open(assetName);
-        OutputStream out = new FileOutputStream(dest);
-        byte[] buffer = new byte[1024];
-        int read;
-        while ((read = in.read(buffer)) != -1) {
-            out.write(buffer, 0, read);
+    private static String getArch() {
+        for (String androidArch : Build.SUPPORTED_ABIS) {
+            switch (androidArch) {
+                case "arm64-v8a": return "arm64";
+                case "armeabi-v7a": return "arm";
+                case "x86_64": return "x86_64";
+                case "x86": return "x86";
+            }
         }
-        in.close();
-        out.flush();
-        out.close();
+
+        throw new RuntimeException("Unable to determine arch from Build.SUPPORTED_ABIS =  " +
+                Arrays.toString(Build.SUPPORTED_ABIS));
     }
 }
