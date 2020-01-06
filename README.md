@@ -34,7 +34,7 @@ dependencies {
                 .withArm64Injector("frida-inject-12.8.2-android-arm64")
                 .build();
 
-        // build an instance of Frida agent
+        // build an instance of FridaAgent
         FridaAgent fridaAgent = FridaAgent.fromAsset(this, "agent.js");
 
         // inject systemUi
