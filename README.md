@@ -75,4 +75,4 @@ and from your agent
     Java.send({'pid': Process.id});
 ```
 
-The example apk [here](https://github.com/igio90/FridaAndroidInjector/tree/master/example.apk) is this little example built and ready. You will see it works! (only arm64).
+The example apk [here](https://github.com/igio90/FridaAndroidInjector/tree/master/example.apk) is built and ready to try. You will see it works! (only arm64).
