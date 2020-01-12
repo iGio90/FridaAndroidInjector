@@ -37,7 +37,6 @@ dependencies {
         // build an instance of FridaAgent
         FridaAgent fridaAgent = new FridaAgent.Builder(this)
                 .withAgentFromAssets("agent.js")
-                .withOnMessage(this)
                 .build();
 
         // inject systemUi
