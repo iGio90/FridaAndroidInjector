@@ -8,8 +8,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 
-public class Utils {
+class Utils {
     static void extractAsset(Context context, String assetName, File dest) throws IOException {
         AssetManager assetManager = context.getAssets();
         InputStream in = assetManager.open(assetName);
@@ -22,5 +23,16 @@ public class Utils {
         in.close();
         out.flush();
         out.close();
+    }
+
+    static void writeToFile(File dest, String data) {
+        try {
+            OutputStreamWriter outputStreamWriter = new OutputStreamWriter(
+                    new FileOutputStream(dest));
+            outputStreamWriter.write(data);
+            outputStreamWriter.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }

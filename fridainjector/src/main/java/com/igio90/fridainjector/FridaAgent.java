@@ -15,6 +15,12 @@ public class FridaAgent {
         return fridaAgent;
     }
 
+    public static FridaAgent fromString(Context context, String agent) {
+        FridaAgent fridaAgent = new FridaAgent(context);
+        Utils.writeToFile(fridaAgent.getAgent(), agent);
+        return fridaAgent;
+    }
+
     private FridaAgent(Context context) {
         mAgent = new File(context.getFilesDir(), "agent.js");
     }
