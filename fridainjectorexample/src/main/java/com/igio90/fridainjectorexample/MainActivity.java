@@ -3,13 +3,18 @@ package com.igio90.fridainjectorexample;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.os.Bundle;
+import android.util.Log;
 
 import com.igio90.fridainjector.FridaAgent;
 import com.igio90.fridainjector.FridaInjector;
+import com.igio90.fridainjector.OnMessage;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.IOException;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements OnMessage {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -23,11 +28,23 @@ public class MainActivity extends AppCompatActivity {
                     .build();
 
             // build an instance of FridaAgent
-            FridaAgent fridaAgent = FridaAgent.fromAsset(this, "agent.js");
-
+            FridaAgent fridaAgent = new FridaAgent.Builder(this)
+                    .withAgentFromAssets("agent.js")
+                    .withOnMessage(this)
+                    .build();
             // inject systemUi
             fridaInjector.inject(fridaAgent, "com.android.systemui", true);
         } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void onMessage(String data) {
+        try {
+            JSONObject object = new JSONObject(data);
+            Log.e("FridaInjector", "SystemUI pid: " + object.getString("pid"));
+        } catch (JSONException e) {
             e.printStackTrace();
         }
     }

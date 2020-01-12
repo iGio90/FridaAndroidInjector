@@ -2,16 +2,12 @@ package com.igio90.fridainjector;
 
 import android.content.Context;
 import android.content.Intent;
-import android.content.res.AssetManager;
 import android.os.Build;
 
 import com.chrisplus.rootmanager.RootManager;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
@@ -30,7 +26,7 @@ public class FridaInjector {
             throw new RuntimeException("did you forget to call init()?");
         }
 
-        String agentPath = fridaAgent.getAgent().getPath();
+        String agentPath = fridaAgent.getWrappedAgent().getPath();
         RootManager.getInstance().runCommand("chmod 777 " + agentPath);
 
         if (!RootManager.getInstance().isProcessRunning(packageName)) {

@@ -35,7 +35,10 @@ dependencies {
                 .build();
 
         // build an instance of FridaAgent
-        FridaAgent fridaAgent = FridaAgent.fromAsset(this, "agent.js");
+        FridaAgent fridaAgent = new FridaAgent.Builder(this)
+                .withAgentFromAssets("agent.js")
+                .withOnMessage(this)
+                .build();
 
         // inject systemUi
         fridaInjector.inject(fridaAgent, "com.android.systemui", true);
@@ -44,5 +47,27 @@ dependencies {
     }
 ````
 
+#### Implementing "on('message')"
+
+```java
+    public class MainActivity extends AppCompatActivity implements OnMessage {
+        @Override
+        public void onMessage(String data) {
+            try {
+                JSONObject object = new JSONObject(data);
+                Log.e("FridaInjector", "SystemUI pid: " + object.getString("pid"));
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+```
+
+```java
+    FridaAgent fridaAgent = new FridaAgent.Builder(this)
+            .withAgentFromAssets("agent.js")
+            .withOnMessage(this)
+            .build();
+```
 
 The example apk [here](https://github.com/igio90/FridaAndroidInjector/tree/master/example.apk) is this little example built and ready. You will see it works! (only arm64).
