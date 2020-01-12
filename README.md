@@ -1,9 +1,6 @@
 ## Frida Injector for Android
 
-is an Android library usable for production applications that inject your agent into apps and processes.
-It obviously requires root on the devices running our final product.
-I have some apps in the Google Play Store shipped with this, injecting js using frida in the Android audio-server and systemui,
-obviously in-line with the Google policy, aka, don't touch copyrighted/3rd party code.
+is a library allowing you to inject frida agents from an Android application.
 
 The things are very very easy:
 
