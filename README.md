@@ -70,4 +70,10 @@ dependencies {
             .build();
 ```
 
+and from your agent
+
+```javascript
+    Java.send({'pid': Process.id});
+```
+
 The example apk [here](https://github.com/igio90/FridaAndroidInjector/tree/master/example.apk) is this little example built and ready. You will see it works! (only arm64).
