@@ -32,8 +32,12 @@ public class MainActivity extends AppCompatActivity implements OnMessage {
                     .withAgentFromAssets("agent.js")
                     .withOnMessage(this)
                     .build();
-            // inject systemUi
-            fridaInjector.inject(fridaAgent, "com.android.systemui", true);
+
+            // register a custom interface
+            fridaAgent.registerInterface("activityInterface", Interfaces.ActivityInterface.class);
+
+            // inject whatsapp
+            fridaInjector.inject(fridaAgent, "com.whatsapp", true);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -43,7 +47,7 @@ public class MainActivity extends AppCompatActivity implements OnMessage {
     public void onMessage(String data) {
         try {
             JSONObject object = new JSONObject(data);
-            Log.e("FridaInjector", "SystemUI pid: " + object.getString("pid"));
+            Log.e("FridaAndroidInject", "whatsapp pid: " + object.getString("pid"));
         } catch (JSONException e) {
             e.printStackTrace();
         }

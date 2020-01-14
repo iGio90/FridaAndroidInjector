@@ -2,6 +2,8 @@ package com.igio90.fridainjector;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
 import android.os.Build;
 
 import com.chrisplus.rootmanager.RootManager;
@@ -9,6 +11,7 @@ import com.chrisplus.rootmanager.RootManager;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.concurrent.TimeUnit;
 
 public class FridaInjector {
@@ -26,12 +29,61 @@ public class FridaInjector {
             throw new RuntimeException("did you forget to call init()?");
         }
 
-        String agentPath = fridaAgent.getWrappedAgent().getPath();
-        RootManager.getInstance().runCommand("chmod 777 " + agentPath);
-
         if (!RootManager.getInstance().isProcessRunning(packageName)) {
             spawn = true;
         }
+
+        StringBuilder agent = new StringBuilder(fridaAgent.getWrappedAgent());
+
+        if (!fridaAgent.getInterfaces().isEmpty()) {
+            try {
+                ApplicationInfo ownAi = fridaAgent.getPackageManager().getApplicationInfo(
+                        fridaAgent.getPackageName(), 0);
+                String ownApk = ownAi.publicSourceDir;
+                ApplicationInfo targetAi = fridaAgent.getPackageManager().getApplicationInfo(packageName, 0);
+                String targetPath = new File(targetAi.publicSourceDir).getPath().substring(0,
+                        targetAi.publicSourceDir.lastIndexOf("/"));
+                if (targetPath.startsWith("/system/")) {
+                    RootManager.getInstance().remount("/system", "rw");
+                }
+                RootManager.getInstance().runCommand("cp " + ownApk + " " + targetPath + "/xd.apk");
+                RootManager.getInstance().runCommand("chmod 644 " + targetPath + "/xd.apk");
+                if (targetPath.startsWith("/system/")) {
+                    RootManager.getInstance().runCommand("chown root:root " + targetPath + "/xd.apk");
+                    RootManager.getInstance().remount("/system", "ro");
+                } else {
+                    RootManager.getInstance().runCommand("chown system:system " + targetPath + "/xd.apk");
+                }
+
+                agent.append(FridaAgent.sRegisterClassLoaderAgent);
+
+                for (LinkedHashMap.Entry<String, Class<? extends FridaInterface>> entry :
+                        fridaAgent.getInterfaces().entrySet()) {
+                    agent.append("Java['")
+                            .append(entry.getKey())
+                            .append("'] = function() {")
+                            .append("var defaultClassLoader = Java.classFactory.loader;")
+                            .append("Java.classFactory.loader = Java.classFactory['xd_loader'];")
+                            .append("var clazz = Java.use('")
+                            .append(entry.getValue().getName())
+                            .append("').$new();")
+                            .append("var args = [];")
+                            .append("for (var i=0;i<arguments.length;i++) {")
+                            .append("args[i] = arguments[i]")
+                            .append("}")
+                            .append("clazz.call(Java.array('java.lang.Object', args));")
+                            .append("Java.classFactory.loader = defaultClassLoader;")
+                            .append("};")
+                            .append("\n");
+                }
+            } catch (PackageManager.NameNotFoundException e) {
+                e.printStackTrace();
+            }
+        }
+
+        File fridaAgentFile = new File(fridaAgent.getFilesDir(), "wrapped_agent.js");
+        Utils.writeToFile(fridaAgentFile, agent.toString());
+        RootManager.getInstance().runCommand("chmod 777 " + fridaAgentFile.getPath());
 
         if (spawn) {
             Intent launchIntent = mContext.getPackageManager().getLaunchIntentForPackage(packageName);
@@ -50,7 +102,7 @@ public class FridaInjector {
                         e.printStackTrace();
                     }
                 }
-                inject(packageName, agentPath);
+                inject(packageName, fridaAgentFile.getPath());
             }).start();
 
             if (launchIntent != null) {
@@ -61,7 +113,7 @@ public class FridaInjector {
                 // todo: handle cases here
             }
         } else {
-            inject(packageName, agentPath);
+            inject(packageName, fridaAgentFile.getPath());
         }
     }
 

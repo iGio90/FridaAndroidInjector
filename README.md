@@ -72,4 +72,33 @@ and from your agent
     Java.send({'pid': Process.id});
 ```
 
+#### Implementing sync interfaces
+
+this allows to play with target objects in runtime
+
+```java
+public class Interfaces {
+    static final class ActivityInterface implements FridaInterface {
+        @Override
+        public Object call(Object[] args) {
+            Log.e("FridaAndroidInject", Arrays.toString(args));
+            return null;
+        }
+    }
+}
+```
+```java
+// register a custom interface
+fridaAgent.registerInterface("activityInterface", Interfaces.ActivityInterface.class);
+```
+
+and from your agent
+
+```javascript
+var app = Java.use("android.app.Activity");
+app.onResume.overloads[0].implementation = function() {
+    this.onResume.apply(this, arguments);
+    Java.activityInterface(Java.cast(this, app), "otherArg1", "otherArg2");
+};
+```
 The example apk [here](https://github.com/igio90/FridaAndroidInjector/tree/master/example.apk) is built and ready to try. You will see it works! (only arm64).
