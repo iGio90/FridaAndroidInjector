@@ -101,4 +101,8 @@ app.onResume.overloads[0].implementation = function() {
     Java.activityInterface(Java.cast(this, app), "otherArg1", "otherArg2");
 };
 ```
+
+### additional
+* console.log is redirected to Log.e("FridaAndroidInject", what);
+
 The example apk [here](https://github.com/igio90/FridaAndroidInjector/tree/master/example.apk) is built and ready to try. You will see it works! (only arm64).
