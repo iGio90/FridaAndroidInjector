@@ -74,7 +74,7 @@ and from your agent
 
 #### Implementing sync interfaces
 
-this allows to play with target objects in runtime
+this allows to play with target objects in runtime from your java impl
 
 ```java
 public class Interfaces {
