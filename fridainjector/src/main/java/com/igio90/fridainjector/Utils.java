@@ -56,7 +56,7 @@ class Utils {
         String content;
         StringBuilder stringBuilder = new StringBuilder();
         while ((content = bufferedReader.readLine()) != null) {
-            stringBuilder.append(content);
+            stringBuilder.append(content).append("\n");
         }
         is.close();
         return stringBuilder.toString();
